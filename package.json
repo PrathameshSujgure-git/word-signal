@@ -1,0 +1,33 @@
+{
+  "name": "signal-decode",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "signal": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.tsx",
+    "build": "tsc",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "figlet": "^1.10.0",
+    "ink": "^6.8.0",
+    "ink-big-text": "^2.0.0",
+    "ink-gradient": "^4.0.0",
+    "react": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts": "^24.0.0",
+    "@types/figlet": "^1.7.0",
+    "@types/react": "^19.2.14",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
