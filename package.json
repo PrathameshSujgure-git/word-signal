@@ -9,12 +9,14 @@
   "scripts": {
     "dev": "tsx src/index.tsx",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "node --test"
   },
-  "keywords": [],
+  "files": ["dist"],
+  "keywords": ["terminal", "game", "cipher", "cyberpunk", "cli"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "A cyberpunk code-breaking terminal game",
   "dependencies": {
     "chalk": "^5.6.2",
     "figlet": "^1.10.0",
