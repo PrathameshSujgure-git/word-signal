@@ -7,18 +7,34 @@ const { topLeft, topRight, bottomLeft, bottomRight, horizontal, vertical, teeLef
 interface HUDProps {
   children: React.ReactNode;
   width?: number;
+  title?: string;
 }
 
-export function HUD({ children, width = 50 }: HUDProps) {
+export function HUD({ children, width = 60, title }: HUDProps) {
   const inner = width - 2;
-  const topBorder = topLeft + horizontal.repeat(inner) + topRight;
-  const bottomBorder = bottomLeft + horizontal.repeat(inner) + bottomRight;
+
+  let topBar: React.ReactNode;
+  if (title) {
+    const titleStr = ` ${title} `;
+    const remaining = inner - titleStr.length;
+    const left = Math.floor(remaining / 2);
+    const right = Math.max(0, remaining - left);
+    topBar = (
+      <Text color={colors.borderHi}>
+        {topLeft}{horizontal.repeat(left)}
+        <Text color={colors.amber} bold>{titleStr}</Text>
+        {horizontal.repeat(right)}{topRight}
+      </Text>
+    );
+  } else {
+    topBar = <Text color={colors.borderHi}>{topLeft}{horizontal.repeat(inner)}{topRight}</Text>;
+  }
 
   return (
     <Box flexDirection="column">
-      <Text color={colors.primary}>{topBorder}</Text>
+      {topBar}
       {children}
-      <Text color={colors.primary}>{bottomBorder}</Text>
+      <Text color={colors.borderHi}>{bottomLeft}{horizontal.repeat(inner)}{bottomRight}</Text>
     </Box>
   );
 }
@@ -28,12 +44,12 @@ interface HUDRowProps {
   width?: number;
 }
 
-export function HUDRow({ children, width = 50 }: HUDRowProps) {
+export function HUDRow({ children, width = 60 }: HUDRowProps) {
   return (
     <Box>
-      <Text color={colors.primary}>{vertical} </Text>
-      <Box width={width - 4}>{children}</Box>
-      <Text color={colors.primary}> {vertical}</Text>
+      <Text color={colors.borderHi}>{vertical} </Text>
+      <Box width={width - 4} flexShrink={0}>{children}</Box>
+      <Text color={colors.borderHi}> {vertical}</Text>
     </Box>
   );
 }
@@ -42,7 +58,7 @@ interface HUDDividerProps {
   width?: number;
 }
 
-export function HUDDivider({ width = 50 }: HUDDividerProps) {
+export function HUDDivider({ width = 60 }: HUDDividerProps) {
   const inner = width - 2;
-  return <Text color={colors.primary}>{teeLeft + horizontal.repeat(inner) + teeRight}</Text>;
+  return <Text color={colors.borderHi}>{teeLeft}{horizontal.repeat(inner)}{teeRight}</Text>;
 }

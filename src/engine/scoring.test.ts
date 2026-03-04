@@ -1,10 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import {
-  getStreakMultiplier,
-  calculateAccuracy,
-  calculateScore,
-} from "./scoring.js";
+import { getStreakMultiplier, calculateScore } from "./scoring.js";
 
 describe("getStreakMultiplier", () => {
   it("returns 1 for streak < 3", () => {
@@ -28,50 +24,100 @@ describe("getStreakMultiplier", () => {
   });
 });
 
-describe("calculateAccuracy", () => {
-  it("returns 1 for exact match", () => {
-    assert.equal(calculateAccuracy("hello", "hello"), 1);
-  });
-
-  it("returns 0 for completely wrong", () => {
-    assert.equal(calculateAccuracy("abc", "xyz"), 0);
-  });
-
-  it("handles different lengths", () => {
-    const acc = calculateAccuracy("ab", "abc");
-    assert.equal(acc, 2 / 3);
-  });
-});
-
 describe("calculateScore", () => {
-  it("scores correct words at 100 points each", () => {
-    const result = calculateScore("hello world", "hello world", 0, 0);
+  it("scores solved words at wordLength * 20", () => {
+    const words = [
+      { original: "hello", solved: true, skipped: false, hinted: false }, // 5*20 = 100
+      { original: "world", solved: true, skipped: false, hinted: false }, // 5*20 = 100
+    ];
+    const result = calculateScore(words, 0, 0, 0);
     assert.equal(result.wordScore, 200);
-    assert.equal(result.perfect, true);
+    assert.equal(result.total, 200);
+    assert.equal(result.won, true);
   });
 
-  it("adds time bonus for perfect answers", () => {
-    const result = calculateScore("hello", "hello", 10, 0);
-    assert.equal(result.timeBonus, 20);
-    assert.equal(result.total, 120); // 100 + 20
+  it("gives 0 points for hinted words", () => {
+    const words = [
+      { original: "hello", solved: true, skipped: false, hinted: true },
+    ];
+    const result = calculateScore(words, 0, 0, 0);
+    assert.equal(result.wordScore, 0);
   });
 
-  it("no time bonus for imperfect answers", () => {
-    const result = calculateScore("hello", "hellx", 10, 0);
+  it("gives 0 points for skipped words", () => {
+    const words = [
+      { original: "hello", solved: false, skipped: true, hinted: false },
+    ];
+    const result = calculateScore(words, 0, 0, 0);
+    assert.equal(result.wordScore, 0);
+    assert.equal(result.won, false);
+  });
+
+  it("adds time bonus when all solved", () => {
+    const words = [
+      { original: "hack", solved: true, skipped: false, hinted: false },
+    ];
+    const result = calculateScore(words, 10, 0, 0);
+    assert.equal(result.timeBonus, 30); // 10 * 3
+    assert.equal(result.allSolved, true);
+  });
+
+  it("no time bonus when not all solved", () => {
+    const words = [
+      { original: "hack", solved: true, skipped: false, hinted: false },
+      { original: "planet", solved: false, skipped: true, hinted: false },
+    ];
+    const result = calculateScore(words, 10, 0, 0);
     assert.equal(result.timeBonus, 0);
-    assert.equal(result.perfect, false);
+  });
+
+  it("applies tool penalty", () => {
+    const words = [
+      { original: "hack", solved: true, skipped: false, hinted: false }, // 80
+    ];
+    const result = calculateScore(words, 0, 0, 3); // 3 tool uses = -30
+    assert.equal(result.toolPenalty, 30);
+    assert.equal(result.total, 50); // 80 - 30
   });
 
   it("applies streak multiplier", () => {
-    const result = calculateScore("hello", "hello", 0, 5);
+    const words = [
+      { original: "hello", solved: true, skipped: false, hinted: false }, // 100
+    ];
+    const result = calculateScore(words, 0, 5, 0); // streak 5 = x2
     assert.equal(result.multiplier, 2);
-    assert.equal(result.total, 200); // 100 * 2
+    assert.equal(result.total, 200);
   });
 
-  it("calculates partial accuracy score", () => {
-    // "hell" matches 4 of 5 chars → accuracy 0.8 → wordScore ~80
-    const result = calculateScore("hello", "hellx", 0, 0);
-    assert.equal(result.accuracy, 0.8);
-    assert.equal(result.wordScore, 80);
+  it("win requires >= 60% solved", () => {
+    const words = [
+      { original: "a", solved: true, skipped: false, hinted: false },
+      { original: "b", solved: true, skipped: false, hinted: false },
+      { original: "c", solved: true, skipped: false, hinted: false },
+      { original: "d", solved: false, skipped: true, hinted: false },
+      { original: "e", solved: false, skipped: true, hinted: false },
+    ];
+    const result = calculateScore(words, 0, 0, 0);
+    assert.equal(result.won, true); // 3/5 = 60%
+  });
+
+  it("loss when < 60% solved", () => {
+    const words = [
+      { original: "a", solved: true, skipped: false, hinted: false },
+      { original: "b", solved: false, skipped: true, hinted: false },
+      { original: "c", solved: false, skipped: true, hinted: false },
+      { original: "d", solved: false, skipped: true, hinted: false },
+      { original: "e", solved: false, skipped: true, hinted: false },
+    ];
+    const result = calculateScore(words, 0, 0, 0);
+    assert.equal(result.won, false); // 1/5 = 20%
+  });
+
+  it("total never goes negative", () => {
+    const words = [
+      { original: "hi", solved: true, skipped: false, hinted: false }, // 40
+    ];
+    const result = calculateScore(words, 0, 0, 10); // penalty = 100
+    assert.ok(result.total >= 0);
   });
 });

@@ -1,99 +1,123 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
-  caesarEncrypt,
-  caesarDecrypt,
-  substitutionEncrypt,
-  substitutionDecrypt,
-  vigenereEncrypt,
-  vigenereDecrypt,
-  generateSubstitutionKey,
-  encryptMessage,
+  scrambleWord,
+  scrambleMessage,
+  isAutoSolved,
+  getWordDisplay,
 } from "./ciphers.js";
 
-describe("Caesar cipher", () => {
-  it("encrypts lowercase text", () => {
-    assert.equal(caesarEncrypt("abc", 3), "def");
+describe("scrambleWord", () => {
+  it("returns same word for 1-2 char words", () => {
+    assert.equal(scrambleWord("a"), "a");
+    assert.equal(scrambleWord("is"), "is");
   });
 
-  it("decrypts lowercase text", () => {
-    assert.equal(caesarDecrypt("def", 3), "abc");
+  it("scrambles longer words to different order", () => {
+    const word = "fortune";
+    const scrambled = scrambleWord(word);
+    assert.notEqual(scrambled, word);
+    assert.equal(scrambled.length, word.length);
+    // same letters
+    assert.deepEqual([...scrambled].sort(), [...word].sort());
   });
 
-  it("wraps z correctly", () => {
-    assert.equal(caesarEncrypt("xyz", 3), "abc");
+  it("preserves all original characters", () => {
+    const word = "hello";
+    const scrambled = scrambleWord(word);
+    assert.deepEqual([...scrambled].sort(), [...word].sort());
   });
 
-  it("preserves spaces and punctuation", () => {
-    assert.equal(caesarEncrypt("hello, world!", 1), "ifmmp, xpsme!");
-  });
-
-  it("handles uppercase letters", () => {
-    assert.equal(caesarEncrypt("ABC", 1), "BCD");
-    assert.equal(caesarDecrypt("BCD", 1), "ABC");
-  });
-
-  it("roundtrips correctly", () => {
-    const text = "Hello World 123!";
-    assert.equal(caesarDecrypt(caesarEncrypt(text, 13), 13), text);
-  });
-});
-
-describe("Substitution cipher", () => {
-  it("encrypts and decrypts roundtrip", () => {
-    const key = "qwertyuiopasdfghjklzxcvbnm";
-    const text = "hello world";
-    const encrypted = substitutionEncrypt(text, key);
-    assert.equal(substitutionDecrypt(encrypted, key), text);
-  });
-
-  it("preserves spaces and punctuation", () => {
-    const key = "qwertyuiopasdfghjklzxcvbnm";
-    const encrypted = substitutionEncrypt("a b! c", key);
-    assert.ok(encrypted.includes(" "));
-    assert.ok(encrypted.includes("!"));
-  });
-
-  it("handles uppercase", () => {
-    const key = "qwertyuiopasdfghjklzxcvbnm";
-    const encrypted = substitutionEncrypt("Hello", key);
-    assert.equal(encrypted[0], encrypted[0].toUpperCase());
-    assert.equal(substitutionDecrypt(encrypted, key), "Hello");
-  });
-
-  it("generateSubstitutionKey returns valid 26-char permutation", () => {
-    const key = generateSubstitutionKey();
-    assert.equal(key.length, 26);
-    assert.equal(new Set(key).size, 26);
+  it("returns different result than original for 3+ char words", () => {
+    // Run multiple times to ensure re-shuffle logic works
+    for (let i = 0; i < 10; i++) {
+      const scrambled = scrambleWord("test");
+      assert.notEqual(scrambled, "test");
+    }
   });
 });
 
-describe("Vigenere cipher", () => {
-  it("encrypts correctly", () => {
-    // key "ab": a(shift 0)->a, b(shift 1)->c, a(shift 0)->c
-    assert.equal(vigenereEncrypt("abc", "ab"), "acc");
+describe("scrambleMessage", () => {
+  it("splits message into word states", () => {
+    const result = scrambleMessage("hack the planet");
+    assert.equal(result.words.length, 3);
+    assert.equal(result.words[0]!.original, "hack");
+    assert.equal(result.words[1]!.original, "the");
+    assert.equal(result.words[2]!.original, "planet");
   });
 
-  it("decrypts correctly", () => {
-    assert.equal(vigenereDecrypt("acc", "ab"), "abc");
+  it("auto-solves short words", () => {
+    const result = scrambleMessage("i am a hero");
+    // "i" and "a" are <=2 chars, should be same as original
+    assert.equal(result.words[0]!.scrambled, "i");
+    assert.equal(result.words[2]!.scrambled, "a");
   });
 
-  it("preserves spaces", () => {
-    const text = "hello world";
-    const key = "abc";
-    const encrypted = vigenereEncrypt(text, key);
-    const decrypted = vigenereDecrypt(encrypted, key);
-    assert.equal(decrypted, text);
-    // spaces should remain
-    assert.equal(encrypted.indexOf(" "), text.indexOf(" "));
+  it("scrambles longer words", () => {
+    const result = scrambleMessage("fortune");
+    assert.notEqual(result.words[0]!.scrambled, "fortune");
   });
 
-  it("roundtrips with random key via encryptMessage", () => {
-    const result = encryptMessage("test message", "vigenere");
-    assert.equal(result.cipherType, "vigenere");
-    assert.equal(
-      vigenereDecrypt(result.encrypted, result.key as string),
-      "test message"
-    );
+  it("preserves original text", () => {
+    const msg = "hack the planet";
+    const result = scrambleMessage(msg);
+    assert.equal(result.original, msg);
+  });
+});
+
+describe("isAutoSolved", () => {
+  it("returns true for short words", () => {
+    assert.equal(isAutoSolved("i"), true);
+    assert.equal(isAutoSolved("is"), true);
+    assert.equal(isAutoSolved(""), true);
+  });
+
+  it("returns false for longer words", () => {
+    assert.equal(isAutoSolved("the"), false);
+    assert.equal(isAutoSolved("hack"), false);
+  });
+});
+
+describe("getWordDisplay", () => {
+  it("shows original for auto-solved words", () => {
+    const state = {
+      original: "is",
+      scrambled: "is",
+      revealedPositions: new Set<number>(),
+      firstRevealed: false,
+    };
+    assert.equal(getWordDisplay(state), "is");
+  });
+
+  it("shows scrambled by default", () => {
+    const state = {
+      original: "hack",
+      scrambled: "cahk",
+      revealedPositions: new Set<number>(),
+      firstRevealed: false,
+    };
+    assert.equal(getWordDisplay(state), "cahk");
+  });
+
+  it("reveals positions from unscramble tool", () => {
+    const state = {
+      original: "hack",
+      scrambled: "cahk",
+      revealedPositions: new Set([0, 2]),
+      firstRevealed: false,
+    };
+    // pos 0 = 'h' (from original), pos 2 = 'c' (from original)
+    assert.equal(getWordDisplay(state), "hack");
+  });
+
+  it("reveals first letter when firstRevealed is true", () => {
+    const state = {
+      original: "hack",
+      scrambled: "cahk",
+      revealedPositions: new Set<number>(),
+      firstRevealed: true,
+    };
+    const display = getWordDisplay(state);
+    assert.equal(display[0], "h"); // first letter from original
   });
 });

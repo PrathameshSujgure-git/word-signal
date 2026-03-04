@@ -1,10 +1,13 @@
 {
-  "name": "signal-decode",
-  "version": "1.0.0",
+  "name": "word-signal",
+  "version": "1.2.7",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
   "bin": {
-    "signal": "./dist/index.js"
+    "word-signal": "./dist/cli.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "tsx src/index.tsx",
@@ -12,22 +15,17 @@
     "prepublishOnly": "npm run build",
     "test": "node --test"
   },
-  "files": ["dist"],
-  "keywords": ["terminal", "game", "cipher", "cyberpunk", "cli"],
-  "author": "",
+  "files": ["dist", "assets"],
+  "keywords": ["terminal", "game", "word", "unscramble", "cyberpunk", "cli", "arcade"],
+  "author": "invinciDesigns",
   "license": "ISC",
-  "description": "A cyberpunk code-breaking terminal game",
+  "description": "A cyberpunk word-unscrambling terminal game. Decode scrambled signals before time runs out.",
   "dependencies": {
-    "chalk": "^5.6.2",
-    "figlet": "^1.10.0",
     "ink": "^6.8.0",
-    "ink-big-text": "^2.0.0",
-    "ink-gradient": "^4.0.0",
     "react": "^19.2.4"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^24.0.0",
-    "@types/figlet": "^1.7.0",
     "@types/node": "^25.3.3",
     "@types/react": "^19.2.14",
     "tsx": "^4.21.0",
