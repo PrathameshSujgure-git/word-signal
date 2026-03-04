@@ -1,12 +1,6 @@
 # SIGNAL
 
-```
- ███▀▀▀  ▀█▀  ▄▀▀▀▄  ▄▄▄▄   ▄▀▀▀▄  ▄▄▄▄
- █▀▀▀▀    █   █   ▀  █   █   █   █  █   █
- ▀▀▀▀▀  ▀▀▀▀▀ ▀▀▀▀▀  ▀   ▀   ▀▀▀▀▀  ▀▀▀▀▀
-```
-
-A cyberpunk word-unscrambling arcade game for the terminal. Decode intercepted transmissions before time runs out.
+A word-unscrambling arcade game for the terminal. Decode intercepted transmissions before time runs out.
 
 [![npm](https://img.shields.io/npm/v/word-signal)](https://www.npmjs.com/package/word-signal)
 
